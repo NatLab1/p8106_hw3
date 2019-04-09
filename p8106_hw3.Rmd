@@ -16,6 +16,7 @@ library(AppliedPredictiveModeling)
 library(glmnet)
 library(e1071)
 library(pROC)
+library(MASS)
 
 data("Weekly")
 
@@ -73,4 +74,19 @@ plot(roc.glm2, legacy.axes = TRUE, print.auc = TRUE)
 plot(smooth(roc.glm2), col = 4, add = TRUE)
 
 #AUC = 0.556
+```
+```{r}
+lda.fit = lda(Direction ~ Lag1 + Lag2, data = training.data)
+lda.fit
+plot(lda.fit)
+
+lda.pred <- predict(lda.fit, newdata = test.data)
+head(lda.pred$posterior)
+
+roc.lda <- roc(test.data$Direction, lda.pred$posterior[,2])
+plot(roc.lda, legacy.axes = TRUE, print.auc = TRUE)
+plot(smooth(roc.lda), col = 4, add = TRUE)
+
+#AUC = 0.557
+
 ```
