@@ -14,14 +14,19 @@ library(caret)
 library(ISLR)
 library(AppliedPredictiveModeling)
 library(glmnet)
+library(e1071)
+library(pROC)
+
 data("Weekly")
 
 summary(Weekly)
 
 ```
 
-###Plot
+###Plots
 ```{r}
+pairs(Weekly) 
+
 transparentTheme(trans = .4)
 featurePlot(x = Weekly[, 1:8], 
             y = Weekly$Direction,
@@ -31,27 +36,41 @@ featurePlot(x = Weekly[, 1:8],
             auto.key = list(columns = 2))
 
 ```
+
+###Logistic Regression
 ```{r}
-set.seed(1)
-rowTrain <- createDataPartition(y = Weekly$Direction, p = 0.75, list = FALSE)
 
 glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, 
                data = Weekly, 
-               subset = rowTrain, 
                family = binomial)
 
-contrasts(Weekly$Direction)
+summary(glm.fit)
+#Lag 2 is significant, in addition to the intercept
 
-#Using caret
-ctrl <- trainControl(method = "repeatedcv",
-                     repeats = 5,
-                     summaryFunction = twoClassSummary,
-                     classProbs = TRUE)
-set.seed(1)
-model.glm <- train(x = Weekly[rowTrain,1:8],
-                   y = Weekly$Direction[rowTrain],
-                   method = "glm",
-                   metric = "ROC",
-                   trControl = ctrl)
+probs = predict(glm.fit, type = "response")
+preds = rep("Down", 1089)
+preds[probs > 0.5] = "Up"
+table(preds, Weekly$Direction)
+confusionMatrix(data = as.factor(preds), reference = Weekly$Direction, positive = "Down")
 
+test.pred.prob  <- predict(glm.fit, newdata = Weekly, type = "response")
+roc.glm <- roc(Weekly$Direction, test.pred.prob)
+plot(roc.glm, legacy.axes = TRUE, print.auc = TRUE)
+plot(smooth(roc.glm), col = 4, add = TRUE)
+
+#AUC 0.554
+
+```
+```{r}
+training.data = Weekly[Weekly$Year < 2009,]
+test.data = Weekly[Weekly$Year > 2008,]
+glm.fit2 = glm(Direction ~ Lag1 + Lag2, data = training.data, family = "binomial")
+summary(glm.fit2)
+
+test.pred.prob2 <- predict(glm.fit2, newdata = test.data, type = "response")
+roc.glm2 <- roc(test.data$Direction, test.pred.prob2)
+plot(roc.glm2, legacy.axes = TRUE, print.auc = TRUE)
+plot(smooth(roc.glm2), col = 4, add = TRUE)
+
+#AUC = 0.556
 ```
