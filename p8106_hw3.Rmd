@@ -1,0 +1,31 @@
+---
+title: "p8106 hw3"
+author: "Nathalie Fadel"
+date: "4/8/2019"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(caret)
+library(ISLR)
+library(AppliedPredictiveModeling)
+data("Weekly")
+
+summary(Weekly)
+
+```
+
+```{r}
+transparentTheme(trans = .4)
+featurePlot(x = Weekly[, 1:8], 
+            y = Weekly$Direction,
+            scales = list(x=list(relation="free"), 
+                        y=list(relation="free")),
+            plot = "density", pch = "|", 
+            auto.key = list(columns = 2))
+
+```
+
