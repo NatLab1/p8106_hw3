@@ -17,6 +17,8 @@ library(glmnet)
 library(e1071)
 library(pROC)
 library(MASS)
+library(mlbench)
+library(class)
 
 data("Weekly")
 
@@ -75,6 +77,8 @@ plot(smooth(roc.glm2), col = 4, add = TRUE)
 
 #AUC = 0.556
 ```
+
+###LDA 
 ```{r}
 lda.fit = lda(Direction ~ Lag1 + Lag2, data = training.data)
 lda.fit
@@ -89,4 +93,32 @@ plot(smooth(roc.lda), col = 4, add = TRUE)
 
 #AUC = 0.557
 
+```
+###QDA
+```{r}
+qda.fit <- qda(Direction ~ Lag1 + Lag2, data = training.data)
+qda.fit
+
+qda.pred <- predict(qda.fit, newdata = test.data)
+head(qda.pred$posterior)
+
+roc.qda <- roc(test.data$Direction, qda.pred$posterior[,2])
+plot(roc.qda, legacy.axes = TRUE, print.auc = TRUE)
+plot(smooth(roc.qda), col = 4, add = TRUE)
+
+#AUC = 0.529
+```
+
+
+###KNN
+```{r}
+set.seed(1)
+train.X = cbind(training.data$Lag2)
+test.X = cbind(test.data$Lag2)
+train.Y = cbind(training.data$Direction)
+knn.pred = knn(train.X, test.X, train.Y, k = 1)
+table(knn.pred, test.data$Direction)
+
+knn3.pred = knn(train.X, test.X, train.Y, k = 3)
+table(knn3.pred, test.data$Direction)
 ```
