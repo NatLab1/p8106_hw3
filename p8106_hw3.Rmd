@@ -119,6 +119,29 @@ train.Y = cbind(training.data$Direction)
 knn.pred = knn(train.X, test.X, train.Y, k = 1)
 table(knn.pred, test.data$Direction)
 
-knn3.pred = knn(train.X, test.X, train.Y, k = 3)
-table(knn3.pred, test.data$Direction)
+knn5.pred = knn(train.X, test.X, train.Y, k = 5)
+table(knn5.pred, test.data$Direction)
+
+set.seed(1)
+trctrl <- trainControl(method = "repeatedcv", summaryFunction = twoClassSummary,
+                     classProbs = TRUE, number = 10, repeats = 5)
+knn.fit <- train(Direction ~ Lag1 + Lag2, data = training.data,
+                   method = "knn",
+                   preProcess = c("center","scale"),
+                   trControl = trctrl,
+                   metric = "ROC",
+                    tuneLength = 10)
+knn.fit
+ggplot(knn.fit)
+knn.fit$bestTune
+
+knn.predict <- predict(knn.fit, newdata = test.data)
+plot(knn.fit, print.thres = 0.5, type = "S")
+
+
+roc.knn <- roc(test.data$Direction, knn.predict$posterior[,2])
+plot(roc.knn, legacy.axes = TRUE, print.auc = TRUE)
+plot(smooth(roc.knn), col = 4, add = TRUE)
+
+
 ```
