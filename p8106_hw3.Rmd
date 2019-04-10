@@ -2,8 +2,10 @@
 title: "p8106 hw3"
 author: "Nathalie Fadel"
 date: "4/8/2019"
-output: github_document
+output: html_document
 ---
+
+##Part A
 
 ###Import & view data
 ```{r setup, include=FALSE}
@@ -19,11 +21,12 @@ library(pROC)
 library(MASS)
 library(mlbench)
 library(class)
+```
 
+```{r}
 data("Weekly")
 
 summary(Weekly)
-
 ```
 
 ###Plots
@@ -40,6 +43,8 @@ featurePlot(x = Weekly[, 1:8],
 
 ```
 
+##Part B
+
 ###Logistic Regression
 ```{r}
 
@@ -48,22 +53,34 @@ glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
                family = binomial)
 
 summary(glm.fit)
-#Lag 2 is significant, in addition to the intercept
+```
+From the glm, we can see that the only significant predictor other than the intercept term is Lag 2.  
 
+##Part C  
+
+###Confusion matrix  
+```{r}
 probs = predict(glm.fit, type = "response")
 preds = rep("Down", 1089)
 preds[probs > 0.5] = "Up"
 table(preds, Weekly$Direction)
 confusionMatrix(data = as.factor(preds), reference = Weekly$Direction, positive = "Down")
+```
+Based on the confusion matrix, we can see that most of the cases go up (987/1089 cases) whereas in reality there are only 605/1089 that go up. This indicates that our prediction model does not predict direction well. However, we have a large proportion of true positives (557/605 = 0.921) but this comes at a cost of finding many false positives (430/987 = 0.436).   
 
+##Part D
+
+###ROC curves
+```{r}
 test.pred.prob  <- predict(glm.fit, newdata = Weekly, type = "response")
 roc.glm <- roc(Weekly$Direction, test.pred.prob)
 plot(roc.glm, legacy.axes = TRUE, print.auc = TRUE)
 plot(smooth(roc.glm), col = 4, add = TRUE)
+```  
+The AUC is 0.554. 
 
-#AUC 0.554
+##Part E
 
-```
 ```{r}
 training.data = Weekly[Weekly$Year < 2009,]
 test.data = Weekly[Weekly$Year > 2008,]
@@ -74,9 +91,10 @@ test.pred.prob2 <- predict(glm.fit2, newdata = test.data, type = "response")
 roc.glm2 <- roc(test.data$Direction, test.pred.prob2)
 plot(roc.glm2, legacy.axes = TRUE, print.auc = TRUE)
 plot(smooth(roc.glm2), col = 4, add = TRUE)
-
-#AUC = 0.556
 ```
+The AUC is 0.556  
+
+##Part F
 
 ###LDA 
 ```{r}
@@ -90,10 +108,9 @@ head(lda.pred$posterior)
 roc.lda <- roc(test.data$Direction, lda.pred$posterior[,2])
 plot(roc.lda, legacy.axes = TRUE, print.auc = TRUE)
 plot(smooth(roc.lda), col = 4, add = TRUE)
-
-#AUC = 0.557
-
 ```
+The AUC is 0.557.  
+
 ###QDA
 ```{r}
 qda.fit <- qda(Direction ~ Lag1 + Lag2, data = training.data)
@@ -105,10 +122,10 @@ head(qda.pred$posterior)
 roc.qda <- roc(test.data$Direction, qda.pred$posterior[,2])
 plot(roc.qda, legacy.axes = TRUE, print.auc = TRUE)
 plot(smooth(roc.qda), col = 4, add = TRUE)
-
-#AUC = 0.529
 ```
+The AUC is 0.529.  
 
+##Part G  
 
 ###KNN
 ```{r}
@@ -137,11 +154,5 @@ knn.fit$bestTune
 
 knn.predict <- predict(knn.fit, newdata = test.data)
 plot(knn.fit, print.thres = 0.5, type = "S")
-
-
-roc.knn <- roc(test.data$Direction, knn.predict$posterior[,2])
-plot(roc.knn, legacy.axes = TRUE, print.auc = TRUE)
-plot(smooth(roc.knn), col = 4, add = TRUE)
-
-
 ```
+The KNN model appears to be better at detecting true positives but worse at detecting true negatives. But the amount of true results overall increases as k gets larger. 
